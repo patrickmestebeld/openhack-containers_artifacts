@@ -1,0 +1,45 @@
+version: "3"
+services:
+  poi:
+    build:
+      context: src/poi
+      dockerfile: ../../dockerfiles/Dockerfile_3
+    image: tripinsights/poi:1.0
+    environment:
+      ASPNETCORE_ENVIRONMENT: Local
+      SQL_SERVER: sql
+      SQL_USER: SA
+      SQL_PASSWORD: Password123!
+      SQL_DBNAME: mydrivingDB
+    networks:
+      - openhacknetwork
+    depends_on:
+      - sql
+    ports:
+      - 8080:80
+
+  sql:
+    image: "mcr.microsoft.com/mssql/server:2017-latest"
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: Password123!
+    ports:
+      - 1433:1433
+    networks:
+      - openhacknetwork
+    volumes:
+      - sql_data:/data:/var/opt/mssql/data 
+
+  adminer:
+    image: adminer
+    ports:
+      - 8432:8080
+    networks:
+      - openhacknetwork
+
+networks:
+  openhacknetwork:
+    name: openhack_network
+
+volumes:
+  sql_data:

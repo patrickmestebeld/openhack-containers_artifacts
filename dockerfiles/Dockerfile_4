@@ -1,3 +1,4 @@
+## Trip Insights - Trips API
 # builder - first stage to build the application
 FROM golang:1.17.1 AS gobuild
 

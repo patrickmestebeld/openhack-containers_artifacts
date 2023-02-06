@@ -1,3 +1,4 @@
+## Trip Insights - User Profile API
 FROM node:12-alpine
 
 ARG IMAGE_CREATE_DATE
