@@ -331,3 +331,6 @@ ASALocalRun/
 
 # VSCode Local Settings
 *.vscode
+
+# secrets
+secret.yaml
