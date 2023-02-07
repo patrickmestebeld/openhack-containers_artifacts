@@ -22,19 +22,22 @@ spec:
           valueFrom:
             secretKeyRef:
               name: tripsecret
-              key: SQL_USER
-        - name: SQL_PASSWORD 
+              key: SQL_USER_SECRET
+        - name: SQL_PASSWORD
           valueFrom:
             secretKeyRef:
               name: tripsecret
-              key: SQL_PASSWORD
-        - name: SQL_SERVER 
+              key: SQL_PASSWORD_SECRET
+        - name: SQL_SERVER
           valueFrom:
             secretKeyRef:
               name: tripsecret
-              key: SQL_SERVER
+              key: SQL_SERVER_SECRET
         - name: SQL_DBNAME
-          value: "mydrivingDB"
+          valueFrom:
+            secretKeyRef:
+              name: tripsecret
+              key: SQL_DBNAME_SECRET
         ports:
         - containerPort: 80
           name: webport
@@ -73,19 +76,22 @@ spec:
           valueFrom:
             secretKeyRef:
               name: tripsecret
-              key: SQL_USER
+              key: SQL_USER_SECRET
         - name: SQL_PASSWORD 
           valueFrom:
             secretKeyRef:
               name: tripsecret
-              key: SQL_PASSWORD
+              key: SQL_PASSWORD_SECRET
         - name: SQL_SERVER 
           valueFrom:
             secretKeyRef:
               name: tripsecret
-              key: SQL_SERVER
+              key: SQL_SERVER_SECRET
         - name: SQL_DBNAME
-          value: "mydrivingDB"
+          valueFrom:
+            secretKeyRef:
+              name: tripsecret
+              key: SQL_DBNAME_SECRET    
         ports:
         - containerPort: 80
           name: webport
@@ -124,19 +130,22 @@ spec:
           valueFrom:
             secretKeyRef:
               name: tripsecret
-              key: SQL_USER
+              key: SQL_USER_SECRET
         - name: SQL_PASSWORD 
           valueFrom:
             secretKeyRef:
               name: tripsecret
-              key: SQL_PASSWORD
+              key: SQL_PASSWORD_SECRET
         - name: SQL_SERVER 
           valueFrom:
             secretKeyRef:
               name: tripsecret
-              key: SQL_SERVER
+              key: SQL_SERVER_SECRET
         - name: SQL_DBNAME
-          value: "mydrivingDB"
+          valueFrom:
+            secretKeyRef:
+              name: tripsecret
+              key: SQL_DBNAME_SECRET    
         ports:
         - containerPort: 80
           name: webport
@@ -175,19 +184,22 @@ spec:
           valueFrom:
             secretKeyRef:
               name: tripsecret
-              key: SQL_USER
+              key: SQL_USER_SECRET
         - name: SQL_PASSWORD 
           valueFrom:
             secretKeyRef:
               name: tripsecret
-              key: SQL_PASSWORD
+              key: SQL_PASSWORD_SECRET
         - name: SQL_SERVER 
           valueFrom:
             secretKeyRef:
               name: tripsecret
-              key: SQL_SERVER
+              key: SQL_SERVER_SECRET
         - name: SQL_DBNAME
-          value: "mydrivingDB"
+          valueFrom:
+            secretKeyRef:
+              name: tripsecret
+              key: SQL_DBNAME_SECRET        
         ports:
         - containerPort: 80
           name: webport
@@ -222,6 +234,8 @@ spec:
       - name: tripviewer
         image: registryavj6801.azurecr.io/tripinsights/tripviewer:1.0
         env:
+        - name: ASPNETCORE_ENVIRONMENT 
+          value: Development
         - name: TRIPS_API_ENDPOINT 
           value: "http://trips"
         - name: USERPROFILE_API_ENDPOINT 
