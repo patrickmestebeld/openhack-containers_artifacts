@@ -2,11 +2,13 @@
 ## https://learn.microsoft.com/en-us/azure/aks/manage-azure-rbac
 ## https://learn.microsoft.com/en-us/azure/aks/managed-aad 
 
-## Create AD group
+## Create AD groups
 Write-Host '# Create an AD Admin group. (Press any key to continue)';
 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
 Write-Host '=> az ad group create --display-name patrickAKSAdminGroup --mail-nickname patrickAKSAdminGroup';
 az ad group create --display-name patrickAKSAdminGroup --mail-nickname patrickAKSAdminGroup
+az ad group create --display-name patrickAKSApiDevGroup --mail-nickname patrickAKSApiDevGroup
+az ad group create --display-name patrickAKSWebDevGroup --mail-nickname patrickAKSWebDevGroup
 
 ## Create new resource group 
 Write-Host '# Create a new resource group.  (Press any key to continue)';
@@ -65,10 +67,16 @@ az aks create `
     --enable-azure-rbac `
     --attach-acr registryavj6801
 
-$AD_GROUP_OBJECT_ID = $(az ad group list --query "[?displayName == 'patrickAKSAdminGroup'].id" --output tsv)
 $AKS_ID=$(az aks show -g patrickResourceGroup -n patrickAKSCluster --query id -o tsv)
+
+$AD_ADMIN_GROUP_OBJECT_ID = $(az ad group list --query "[?displayName == 'patrickAKSAdminGroup'].id" -o tsv)
+$AD_API_GROUP_OBJECT_ID = $(az ad group list --query "[?displayName == 'patrickAKSApiDevGroup'].id" -o tsv)
+$AD_WEB_GROUP_OBJECT_ID = $(az ad group list --query "[?displayName == 'patrickAKSWebDevGroup'].id" -o tsv)
+
 Write-Host '=> az role assignment create';
-az role assignment create --role "Azure Kubernetes Service RBAC Admin" --assignee $AD_GROUP_OBJECT_ID --scope $AKS_ID
+az role assignment create --role "Azure Kubernetes Service RBAC Cluster Admin" --assignee $AD_ADMIN_GROUP_OBJECT_ID --scope $AKS_ID
+az role assignment create --role "Azure Kubernetes Service RBAC Role" --assignee $AD_API_GROUP_OBJECT_ID --scope $AKS_ID
+az role assignment create --role "Azure Kubernetes Service RBAC Role" --assignee $AD_WEB_GROUP_OBJECT_ID --scope $AKS_ID
 
 # Switch login Kubernetes to current
 Write-Host '# Switch login Kubernetes to current.  (Press any key to continue)';
@@ -77,9 +85,14 @@ Write-Host '=> az aks get-credentials --resource-group patrickResourceGroup --na
 az aks get-credentials --resource-group patrickResourceGroup --name patrickAKSCluster
 
 ## K8s apply resources by files 
-Write-Host '# Apply Kubernetes resources files.  (Press any key to continue)';
+Write-Host '# Apply Kubernetes resources files. ';
+Write-Host 'Fill in AD_API_DEV_GROUP_OBJECT_ID for role binding:' + $AD_API_DEV_GROUP_OBJECT_ID;
+Write-Host 'Fill in AD_WEB_DEV_GROUP_OBJECT_ID for role binding:' + $AD_WEB_DEV_GROUP_OBJECT_ID;
+Write-Host '(Press any key to continue)';
 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
 Write-Host '=> kubectl apply -f ./k8s/secret.yaml';
 kubectl apply -f ./k8s/secret.yaml
 Write-Host '=> kubectl apply -f ./k8s/trips-cluster.yaml';
 kubectl apply -f ./k8s/trips-cluster.yaml
+Write-Host '=> kubectl apply -f ./k8s/trips-roles.yaml';
+kubectl apply -f ./k8s/trips-roles.yaml

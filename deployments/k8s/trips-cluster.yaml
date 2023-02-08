@@ -1,7 +1,18 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: web
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: api
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: poi
+  namespace: api
 spec:
   replicas: 1
   selector:
@@ -46,6 +57,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: poi
+  namespace: api
 spec:
   ports:
   - port: 80
@@ -56,6 +68,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: userjava
+  namespace: api
 spec:
   replicas: 1
   selector:
@@ -100,6 +113,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: userjava
+  namespace: api
 spec:
   ports:
   - port: 80
@@ -110,6 +124,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: userprofile
+  namespace: api
 spec:
   replicas: 1
   selector:
@@ -154,6 +169,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: userprofile
+  namespace: api
 spec:
   ports:
   - port: 80
@@ -164,6 +180,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: trips
+  namespace: api
 spec:
   replicas: 1
   selector:
@@ -208,6 +225,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: trips
+  namespace: api
 spec:
   ports:
   - port: 80
@@ -218,6 +236,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tripviewer
+  namespace: web
 spec:
   replicas: 1
   selector:
@@ -237,9 +256,9 @@ spec:
         - name: ASPNETCORE_ENVIRONMENT 
           value: Development
         - name: TRIPS_API_ENDPOINT 
-          value: "http://trips"
+          value: "http://trips.api"
         - name: USERPROFILE_API_ENDPOINT 
-          value: "http://userprofile"
+          value: "http://userprofile.api"
         ports:
         - containerPort: 80
           name: webport
@@ -248,6 +267,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: tripviewer
+  namespace: web
 spec:
   type: LoadBalancer
   ports:

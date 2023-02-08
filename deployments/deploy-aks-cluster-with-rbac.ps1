@@ -2,12 +2,6 @@
 ## https://learn.microsoft.com/en-us/azure/aks/manage-azure-rbac
 ## https://learn.microsoft.com/en-us/azure/aks/managed-aad 
 
-## Create AD group
-Write-Host '# Create an AD Admin group. (Press any key to continue)';
-$null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
-Write-Host '=> az ad group create --display-name patrickAKSAdminGroup --mail-nickname patrickAKSAdminGroup';
-az ad group create --display-name patrickAKSAdminGroup --mail-nickname patrickAKSAdminGroup
-
 ## Create new resource group 
 Write-Host '# Create a new resource group. (Press any key to continue)';
 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
