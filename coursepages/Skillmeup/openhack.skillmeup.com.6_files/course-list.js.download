@@ -1,0 +1,11 @@
+﻿function getDescription(courseId) {
+    $("[get-description='" + courseId + "']").addClass("hide d-none");
+    $("[hide-description='" + courseId + "']").removeClass("hide d-none");
+    $("#description-" + courseId).removeClass("hide d-none");
+}
+
+function hideDescription(courseId) {
+    $("[hide-description='" + courseId + "']").addClass("hide d-none");
+    $("[get-description='" + courseId + "']").removeClass("hide d-none");
+    $("#description-" + courseId).addClass("hide d-none");
+}

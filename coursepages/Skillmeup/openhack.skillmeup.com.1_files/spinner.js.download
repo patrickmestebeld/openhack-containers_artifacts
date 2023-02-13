@@ -1,0 +1,30 @@
+﻿function addSpinner(element, type) {
+    switch (type) {
+        case "triple":
+            $(element).addClass("spinner-base");
+            $(element).append("<div class='spinner-wrapper'><div><div class='triple-spinner'></div></div></div>");
+            break;
+        case "cm":
+            $(element).addClass("spinner-base");
+            $(element).append("<div class='spinner-wrapper'><div><div class='cm-spinner'></div></div></div>");
+            break;
+        case "multi":
+            $(element).addClass("spinner-base");
+            $(element).append("<div class='spinner-wrapper'><div><div class='multi-spinner-container'><div class='multi-spinner blue'><div class='multi-spinner blue'><div class='multi-spinner orange'><div class='multi-spinner orange'><div class='multi-spinner yellow'><div class='multi-spinner yellow'></div></div></div></div></div></div></div></div></div>");
+            break;
+    }
+}
+
+function removeSpinner(element) {
+    $(".spinner-wrapper", $(element)).remove();
+    $(element).removeClass("spinner-base");
+}
+
+function addFullBodySpinner() {
+    $("body").append("<div class='full-body-spinner-wrapper'><div class='full-body-spinner'></div></div>");
+    addSpinner($(".full-body-spinner"), "triple");
+}
+
+function removeFullBodySpinner() {
+    $(".full-body-spinner-wrapper").remove();
+}

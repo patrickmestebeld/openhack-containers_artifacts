@@ -1,0 +1,103 @@
+﻿var onlineLabStarter = {
+    initiateOnlineLab: function (courseId, moduleId, labsIncluded) {
+        onlineLabStarter.courseId = courseId;
+        onlineLabStarter.moduleId = moduleId;
+        var params = {
+            courseId: courseId,
+            moduleId: moduleId
+        };
+        if (labsIncluded == true) {
+            $("#btnModalStartOnlineLab").removeAttr("disabled");
+            $('#modalEnoughCredits').modal('show');
+        }
+
+        //ajaxRequest.makeAPIRequest("/LabEngine/CheckSubscriptionAvailability?courseId=" + courseId + "&moduleId=" + moduleId, "get", params,
+        //    function (result) {
+        //        if (result == true && labsIncluded == true) {
+        //            $("#btnModalStartOnlineLab").removeAttr("disabled");
+        //            $('#modalEnoughCredits').modal('show');
+        //        }
+        //        if (result == false) {
+        //            $('#modalStartOnlineLab').modal('hide');
+        //            $('#modalSubscriptionUnavailable').modal('show');
+        //        }
+        //    })
+    },
+    startOnlineLab: function (subscriptionId, region) {
+        console.log("1");
+        $("#modalEnoughCredits").modal('hide');
+        var params = {
+            courseId: onlineLabStarter.courseId,
+            moduleId: onlineLabStarter.moduleId,
+            paymentSubscriptionId: subscriptionId,
+            region: onlineLabStarter.region
+        }
+        onlineLabStarter.PaymentSubscriptionId = subscriptionId;
+        console.log("API call complete - closing lab start dialog.");
+        ajaxRequest.makeAPIRequest('/labengine/StartOnlineLab', 'get', params,
+            function (result) {
+                console.log("API call complete - closing lab start dialog.");
+                
+                if (result.Success) {
+                    $('#modalOnlineLabStarted').modal('show');
+                    $("body").trigger("online-lab-started", params);
+                } else {
+                    $('#spanOnlineErrorMessage').html(result.ErrorMessage);
+                    $('#modalOnlineLabError').modal('show');
+                }
+            });
+    },
+    initiateEndOnlineLab: function (courseId, moduleId) {
+        $('#endLabCourseId').val(courseId);
+        $('#endLabModuleId').val(moduleId);
+        $('#modalEndOnlineLab').modal('show');
+    },
+    endOnlineLab: function (courseId, moduleId) {
+        var params = {
+            courseId: courseId,
+            moduleId: moduleId
+        };
+        ajaxRequest.makeAPIRequest('/LabEngine/EndUserLabEnvironment', 'get', params,
+            function (result) {
+                if (result.Success) {
+                    $('#modalEndOnlineLabSuccess').modal('show');
+                    $("body").trigger("online-lab-ended");
+                } else {
+                    $('#spanEndOnlineLabErrorMessage').html(result.ErrorMessage || 'Could not end lab early. Your lab will still end at its regularly scheduled time.');
+                    $('#modalEndOnlineLabError').modal('show');
+                }
+            }
+        );
+    },
+    initiateResumeOnlineLab: function (labEnvironmentId) {
+        ajaxRequest.makeAPIRequest('/LabEngine/ResumeLabEnvironment', 'get', {
+            labEnvironmentId: labEnvironmentId
+        },
+            function (result) {
+
+            }
+        );
+    },
+    courseId: null,
+    moduleId: null,
+    creditCost: null,
+    region: null,
+    attachEvents: function() {
+        $("body").on("click", "#btnModalStartOnlineLab", function () {
+            $(this).attr("disabled", "disabled");
+            var subscriptionId = $("#lab-credits-source").val();
+            onlineLabStarter.region = $("#region-source").val();
+            onlineLabStarter.startOnlineLab(subscriptionId);
+        });
+
+        $("body").on("click", "#btnModalEndOnlineLab", function () {
+            var courseId = $('#endLabCourseId').val();
+            var moduleId = $('#endLabModuleId').val();
+            onlineLabStarter.endOnlineLab(courseId, moduleId);
+            $('#endLabCourseId').val('');
+            $('#endLabModuleId').val('');
+            $('#modalEndOnlineLab').modal('hide');
+        });
+    }
+}
+

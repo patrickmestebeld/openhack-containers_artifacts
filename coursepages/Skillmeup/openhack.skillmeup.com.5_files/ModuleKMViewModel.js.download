@@ -1,0 +1,187 @@
+﻿var moduleKMViewModel = {
+
+    moduleTitle: ko.observable(),
+    totalQuestionCount: ko.observable(),
+    currentQuestionCount: ko.observable(),
+    selectedQuestion: ko.observable(),
+    answerChoices: ko.observableArray([]),
+    enableNext: ko.observable(),
+    enablePrevious: ko.observable(),
+    selectedQuestionId: null,
+    selectedAnswerId: null,
+    userAnswers: ko.observableArray([]),
+    index: 0,
+    moduleQuestions: null,
+    courseId: null,
+    CourseModuleId: null,
+    ModuleId: null,
+    IsLab: ko.observable(true),
+    KmResult: ko.observableArray([]),
+    kmScore: ko.observable(),
+    IsMultipleChoice: ko.observable(true),
+    detailedAnswer: ko.observable(),
+    loadModuleKMInfo: function (courseModuleId, moduleId) {
+        ajaxRequest.makeAPIRequest("/Module/GetModuleKnowledgeMeasure", "GET", { courseModuleId: courseModuleId }, function (data) {
+            moduleKMViewModel.CourseModuleId = data.CourseModuleId;
+            moduleKMViewModel.courseId = data.CourseId;
+            moduleKMViewModel.ModuleId = moduleId;
+            moduleKMViewModel.moduleTitle(data.Module.TrainingMaterial.Title);
+            moduleKMViewModel.totalQuestionCount(data.Module.KnowledgeMeasureCount);
+            moduleKMViewModel.moduleQuestions = data.Module.ModuleKMs;
+            moduleKMViewModel.enableNext(false);
+            moduleKMViewModel.enablePrevious(false);
+            if (data.Module.KnowledgeMeasureCount > 0) {
+                // Set the Question information
+                var startIndex = data.Module.KMStartingIndex === data.Module.KnowledgeMeasureCount ? 0 : data.Module.KMStartingIndex;
+                moduleKMViewModel.IsLab(true);
+                moduleKMViewModel.index = startIndex;
+                moduleKMViewModel.setupQuestion();
+                moduleViewModel.resetTimelineHeight();
+            }
+            moduleKMViewModel.userAnswers.removeAll();
+            moduleViewModel.resetTimelineHeight();
+            $("body").trigger("load-module-km-finished")
+        });
+    },
+
+    previousQuestion: function () {
+        moduleKMViewModel.userAnswers.push(
+            {
+                "ModuleKMId": moduleKMViewModel.selectedQuestionId,
+                "SelectedAnswerId": moduleKMViewModel.selectedAnswerId,
+                "CourseModuleId": moduleKMViewModel.CourseModuleId,
+                "DetailedAnswer": moduleKMViewModel.detailedAnswer()
+            });
+        moduleKMViewModel.index--;
+        moduleKMViewModel.setupQuestion();
+        moduleKMViewModel.enablePrevious(false);
+        moduleViewModel.resetTimelineHeight();
+    },
+
+    nextQuestion: function () {
+        moduleKMViewModel.userAnswers.push(
+            {
+                "ModuleKMId": moduleKMViewModel.selectedQuestionId,
+                "SelectedAnswerId": moduleKMViewModel.selectedAnswerId,
+                "CourseModuleId": moduleKMViewModel.CourseModuleId,
+                "DetailedAnswer": moduleKMViewModel.detailedAnswer()
+            });
+        moduleKMViewModel.index++;
+        moduleKMViewModel.setupQuestion();
+        moduleKMViewModel.enableNext(false);
+        moduleViewModel.resetTimelineHeight();
+    },
+
+    setupQuestion: function () {
+        var currentData = moduleKMViewModel.moduleQuestions[moduleKMViewModel.index];
+        moduleKMViewModel.selectedQuestion(currentData.KMQuestion.Description);
+        moduleKMViewModel.selectedQuestionId = currentData.ModuleKMId;
+        moduleKMViewModel.answerChoices(currentData.KMQuestion.KMAnswers);
+        moduleKMViewModel.currentQuestionCount(moduleKMViewModel.index + 1);
+
+        var data = moduleKMViewModel.moduleQuestions[moduleKMViewModel.index].KMQuestion;
+        if (data.KMQuestionTypeId === 1) {
+            moduleKMViewModel.IsMultipleChoice(true);
+        }
+        else {
+            moduleKMViewModel.IsMultipleChoice(false);
+        }
+    },
+
+    onAnswerSelection: function (selectedAnswerId) {
+        if (selectedAnswerId !== null) {
+            moduleKMViewModel.enableNext(true);
+            moduleKMViewModel.enablePrevious(true);
+            return true;
+        }
+        else {
+            if (moduleKMViewModel.detailedAnswer().length > 0) {
+                moduleKMViewModel.enableNext(true);
+                moduleKMViewModel.enablePrevious(true);
+                moduleKMViewModel.selectedAnswerId = null;
+                return true;
+            }
+            else {
+                moduleKMViewModel.enableNext(false);
+                moduleKMViewModel.enablePrevious(false);
+                $("#content-km").css("background-color", "#89c0c7");
+                return false;
+            }
+        }
+
+    },
+
+    back: function () {
+        ajaxRequest.makeAPIRequest("/Course/GetTrainingMaterialCode", "GET", { id: moduleKMViewModel.courseId }, function (result) {
+            $("#kmDialog").modal('hide');
+            $("#assessmentModal").modal('hide');
+            if (moduleKMViewModel.kmScore() !== "") {
+                var kmScore = parseFloat(moduleKMViewModel.kmScore());
+                if (kmScore < 60) {
+                    ajaxRequest.makeAPIRequest("/Module/GetLastKm", "GET", {
+                        "id": moduleKMViewModel.CourseModuleId,
+                        "moduleId": moduleKMViewModel.ModuleId
+                    }, function (response) {
+                            var fullDate = new Date(response.LastUpdateDate + " " + response.LastUpdateTime + " UTC");
+                            moduleViewModel.LastUpdateDate(fullDate.toLocaleDateString());
+                            moduleViewModel.LastUpdateTime(fullDate.toLocaleTimeString());
+                            $("#assessmentModal").modal("hide");
+                            //$("#delayKnowledgeMeasureModal").modal('show');
+                    });
+                    //opsgility.showNotificationMessage("Message ", "Your KM score is : " + moduleKMViewModel.kmScore() + "% .<br>You need to reappear for KM after 3 hrs.", false);
+                }
+            }
+            moduleViewModel.moduleActivityOnUnload();
+            moduleViewModel.loadCourseModulesData(result, moduleKMViewModel.CourseModuleId);
+        });
+    },
+
+    moveToPrevious: function () {
+        moduleKMViewModel.index--;
+        moduleKMViewModel.setupQuestion();
+        moduleKMViewModel.enableNext(false);
+        moduleKMViewModel.enablePrevious(false);
+        moduleViewModel.resetTimelineHeight();
+    },
+
+    saveUserKMAnswer: function () {
+        var userAnswer = {
+            "ModuleKMId": moduleKMViewModel.selectedQuestionId,
+            "SelectedAnswerId": moduleKMViewModel.selectedAnswerId,
+            "CourseModuleId": moduleKMViewModel.CourseModuleId,
+            "DetailedAnswer": moduleKMViewModel.detailedAnswer()
+        };
+        var data = ko.toJSON(userAnswer);
+        addSpinner($("#content-km"), "triple");
+        $("body").trigger("show-spinner");
+
+        ajaxRequest.makeAPIRequest("/Module/SaveUserKMAnswer", "POST", data, function (data) {
+            removeSpinner($("#content-km"));
+            $("body").trigger("hide-spinner");
+            if (data) {
+                if (moduleKMViewModel.totalQuestionCount() === moduleKMViewModel.currentQuestionCount()) {
+                    moduleKMViewModel.IsLab(false);
+                    moduleKMViewModel.KmResult(data.ModuleKMs);
+                    moduleKMViewModel.kmScore(data.KMScore);
+                    moduleViewModel.resetTimelineHeight();
+
+                    if (data.KMScore >= 60) {
+                        $("#success").removeClass("d-none");
+                        $("#content-km").css("background-color", "#89c0c7");
+                    }
+                    else {
+
+                        $("#fail").removeClass("d-none");
+                    }
+                }
+                else {
+                    moduleKMViewModel.index++;
+                    moduleKMViewModel.setupQuestion();
+                    moduleKMViewModel.enableNext(false);
+                    moduleKMViewModel.enablePrevious(false);
+                    moduleViewModel.resetTimelineHeight();
+                }
+            }
+        });
+    }
+}

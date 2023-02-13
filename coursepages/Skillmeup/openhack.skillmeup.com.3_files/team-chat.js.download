@@ -1,0 +1,108 @@
+﻿var latestMessageId = 0;
+var clId = $("#classroom-Id").attr("value");
+
+updateTeamChat();
+
+function updateTeamChat() {
+    if (clId === undefined) {
+        return;
+    }
+
+    $.get("/labengine/GetLatestTeamChatMessages?classroomId=" + clId + "&latestMessageId=" + latestMessageId).done(function (result) {
+        if (result.Messages && result.Messages.length > 0) {
+            var count = 0;
+            if ($(".active", $("#chat-tab-button")).length === 0) {
+                count = parseInt($("#unread-message-count").html());
+                if (isNaN(count)) { count = 0; }
+            }
+
+            $.each(result.Messages, function () {
+                var date = new Date(this.Milliseconds);
+                var content = "<div class='row'><div class='col-md-12 chat-row'><div class='chat-row-date'>" + date.toLocaleString() + "</div><div class='chat-row-username'>" + this.UserName + ":</div><div class='chat-row-message'>" + this.Message + "</div></div></div>";
+                $("#chat-message-area").append(content);
+                count++;
+            });
+
+            var myDiv = document.getElementById('chat-message-area');
+            myDiv.scrollTop = myDiv.scrollHeight;
+
+            if ($(".active", $("#chat-tab-button")).length === 0 && latestMessageId > 0) {
+                $("#unread-message-count").html(count);
+                $("#unread-message-count").removeClass("hide d-none");
+            }
+        }
+        latestMessageId = result.LastMessageId;
+        setTimeout(function () { updateTeamChat(); }, 3000);
+    });
+}
+
+$("#chat-input-area").on("click", "#user-name-submit", function () {
+    var username = $("#user-name-input", $("#chat-input-area")).val();
+    if (username && username.length > 0) {
+        $.get("/labengine/RegisterUsernameInCookie?classroomId=" + clId + "&username=" + username).done(function (pview) {
+            $("#chat-input-area").html(pview);
+        });
+    }
+    else {
+        $("#user-name-input-error", $("#chat-input-area")).removeClass("hide d-none");
+    }
+});
+
+$("#chat-input-area").on("click", "#chat-text-submit", function () {
+    var text = $("#chat-text-input", $("#chat-input-area")).val();
+    if (text && text.length > 0) {
+        var data = {
+            classroomId: clId,
+            message: text,
+            __RequestVerificationToken: $("[name='__RequestVerificationToken']", $("#layout-token")).val()
+        };
+        $.post("/labengine/SendGroupChatMessage", data).done(function (response) {
+            if (response !== "") {
+                $("#chat-input-area").html(response);
+            }
+            else {
+                $("#chat-text-input", $("#chat-input-area")).val("");
+            }
+        });
+    }
+});
+
+$("#chat-input-area").on("click", "#chat-text-dates", function () {
+    $(".chat-row-date", $("#chat-message-area")).toggleClass("hide d-none");
+});
+
+$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+    var target = $(e.target).attr("href"); 
+    if (target === "#ChatTab") {
+        $("#unread-message-count").html("");
+        $("#unread-message-count").addClass("hide d-none");
+        var myDiv = document.getElementById('chat-message-area');
+        myDiv.scrollTop = myDiv.scrollHeight;
+    }
+});
+
+$("#contacttrainermodal").on("show.bs.modal", function () {
+    $("#contact-trainer-message").val("");
+    $("#contact-trainer-errormessage").html("");
+    $("#contact-trainer-errormessage").addClass("hide d-none");
+    validator = $("#contact-trainer-form").validate();
+    validator.resetForm();
+});
+
+$("#contact-trainer-form").on("submit", function () {
+    if ($(this).valid() === true) {
+        addSpinner($(".modal-content", $("#contacttrainermodal")), "triple");
+    }
+});
+
+function contactTrainerResponse(data) {
+    removeSpinner($(".modal-content", $("#contacttrainermodal")));
+    if (data.IsSuccess === true) {
+        $("#contacttrainermodal").modal("hide");
+        alert("Message successfully sent.");
+    }
+    else {
+        $("#contact-trainer-errormessage").removeClass("hide d-none");
+        $("#contact-trainer-errormessage").html(data.Message);
+    }
+}
